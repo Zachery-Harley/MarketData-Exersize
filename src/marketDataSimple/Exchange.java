@@ -4,25 +4,28 @@ import java.util.LinkedList;
 
 public class Exchange {
 	
+	
 	LinkedList<OrderBook> orderBooks = new LinkedList<>();
 	private String exchangeName;
 	protected boolean internalExchange = false;
 	
 	public Exchange(String name) {
-		//Create and add the order books to the list 
-		orderBooks.add(new OrderBook(new Company("HSBC"), this));
-		orderBooks.add(new OrderBook(new Company("BT"), this));
-		orderBooks.add(new OrderBook(new Company("VOD"), this));
 		this.exchangeName = name;
 	}
+	
+	public void newOrderBook(Ric ric) {
+		OrderBook newBook = new OrderBook(ric.setExchangeID(getName()), this);
+		orderBooks.add(newBook);
+	}
+	
 	
 	/**
 	 * Push an order to the exchange where it can then be matched and a trade made
 	 * @param newOrder - The new order to pushed to the exchange
 	 */
 	public void pushOrder(TradeOrder newOrder) {
-		OrderBook orderbook = getOrderBook(newOrder.getCompany());
-		orderbook.addOrder(newOrder);
+		OrderBook orderbook = getOrderBook(newOrder.getRic());
+		orderbook.pushOrder(newOrder);
 	}
 	
 	/**
@@ -31,9 +34,9 @@ public class Exchange {
 	 * @param company - The company to find the oder book of
 	 * @return The order book for the given company, null otherwise
 	 */
-	public OrderBook getOrderBook(Company company) {
+	public OrderBook getOrderBook(Ric ric) {
 		for(OrderBook book : orderBooks) {
-			if(book.getCompany().equals(company)) {
+			if(book.getRic().equals(ric)) {
 				return book;
 			}
 		}

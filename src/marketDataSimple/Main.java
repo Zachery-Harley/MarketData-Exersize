@@ -6,13 +6,16 @@ import java.util.Random;
 public class Main {
 
 	static InternalExchange market = new InternalExchange("JPMorgan");
-	static Company HSBC = new Company("HSBC");
-	static Company VOD = new Company("VOD");
-	static Company BT = new Company("BT");
+	static Ric HSBC = new Ric("HSBC", "HSBC");
+	static Ric VOD = new Ric("VOD", "Vodafone");
+	static Ric BT = new Ric("BT", "British Telecomunications");
 	
-	public static void main(String[] args) {
+	public static void main(String[] args) {		
+		market.newOrderBook(VOD);
+		market.newOrderBook(BT);
+		market.newOrderBook(HSBC);
+		
 		generateOrders();
-		System.out.println("\nDone:\n"+market.toString());
 	}
 	
 	public static void generateOrders() {
@@ -33,7 +36,7 @@ public class Main {
 		}
 	}
 	
-	public static void generateRandomTrade(Random rand, LocalTime time, Company company) {
+	public static void generateRandomTrade(Random rand, LocalTime time, Ric company) {
 		boolean buy = rand.nextBoolean();
 		int amount = rand.nextInt(100);
 		double cost = (rand.nextDouble() * 10);

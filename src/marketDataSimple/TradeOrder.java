@@ -1,110 +1,134 @@
 package marketDataSimple;
 
 import java.time.LocalTime;
+import java.util.ArrayList;
 
 public class TradeOrder {
 
-	private boolean isBuyOrder;
-	private Company company;
-	private int shareTotal;
-	private int shareFulfilled;
-	private double offerPerShare;
-	private LocalTime tradeTime;
-	private boolean sentToExchange = false;
+	private LocalTime exTime;
+	private LocalTime time;
+	private Ric ric;
+	private String currency = "GBp";
+	private ArrayList<Trade> completedTrades = new ArrayList<Trade>();
+	private ArrayList<TradeOrder> childOrders = new ArrayList<TradeOrder>();
+	private int size;
+	private double price;
+	private boolean buyOrder;
+	private boolean condition;
 	
-	public TradeOrder(Company company, boolean isBuyOrder, int shareTotal, double offerPerShare) {
-		this.isBuyOrder = isBuyOrder;
-		this.shareTotal = shareTotal;
-		this.offerPerShare = offerPerShare;
-		this.company = company;
-		System.nanoTime();
+	////////////////////////////////
+	///////// Constructor //////////
+	////////////////////////////////
+	
+	public TradeOrder(Ric ric, boolean buyOrder, int size, double price) {
+		this.ric = ric;
+		this.buyOrder = buyOrder;
+		this.size = size;
+		this.price = price;
+	}
+	
+	///////////////////////////////
+	///////// Getters and setters /
+	///////////////////////////////
+	
+	/**
+	 * Get the size of the trade order
+	 */
+	public int getSize() {
+		return this.size;
 	}
 	
 	/**
-	 * The the bid/offer price for this trade order
-	 * @return The price for the order
+	 * Get the underlying type of trade. E.g bond, equity, swap
+	 * @return The underlining instrument
+	 */
+	public Instrument getUnderline() {
+		return new Instrument();
+	}
+	
+	/**
+	 * Get the reaming size of the trade order. 0 Meaning that there are
+	 * no more Instruments to buy or sell
+	 * @return The number of remaining instruments. 
+	 */
+	public int getRemainingSize() {
+		return this.size-calcFulfilledSize();
+	}
+	
+	/**
+	 * Calculate the amount of the order that has been fulfilled. 0 being when the
+	 * order has not yet been filled partial or completely. 
+	 * @return The amount of the share that has been fulfilled
+	 */
+	public int calcFulfilledSize() {
+		int total = 0;
+		for(Trade trade : completedTrades) {
+			total += trade.getSize();
+		}
+		
+		for(TradeOrder child : childOrders) {
+			total += child.calcFulfilledSize();
+		}
+		
+		return total;
+	}
+	
+	/**
+	 * Get the price being offered by the order
+	 * @return The price of the order
 	 */
 	public double getPrice() {
-		return this.offerPerShare;
+		return this.price;
 	}
 	
 	/**
-	 * The number of shares being bought or sold in the original order
-	 * @return The starting number of shares
-	 */
-	public int originalSharesAvailable() {
-		return shareTotal;
-	}
-	
-	/**
-	 * The number of shares available to be bought or sold
-	 * @return The number of shares still available in the order
-	 */
-	public int leftUnfulfilled() {
-		return this.shareTotal - this.shareFulfilled;
-	}
-	
-	/**
-	 * Add to the number of shares fulfilled in the oder.
-	 * @param quantity The number of shares to buy or sell
-	 */
-	public void addFulfilled(int quantity) {
-		this.shareFulfilled += quantity;
-	}
-	
-	/**
-	 * Return whether or not this order is a trade order
-	 * @return True if a buy order
+	 * Return if the current Trade order is a buy order
+	 * @return True if buy order, false if sell order
 	 */
 	public boolean isBuyOrder() {
-		return this.isBuyOrder;
+		return this.buyOrder;
 	}
 	
 	/**
-	 * Get the time the order was created
-	 * @return
+	 * Has this trade been reported to an exchange
+	 * @return True if reported, false otherwise
 	 */
-	public LocalTime getTime() {
-		return this.tradeTime;
+	public boolean isReported() {
+		return this.condition;
 	}
 	
 	/**
-	 * The name of the company the trade is buying or selling for
-	 * @return
+	 * Set whether or not this trade has been reported to an exchange
+	 * @param condition 
 	 */
-	public Company getCompany() {
-		return this.company;
+	public void setReported(boolean condition) {
+		this.condition = condition;
 	}
 	
-	public boolean isInExchange() {
-		return this.sentToExchange;
+	public void setTime(LocalTime time) {
+		this.time = time;
 	}
 	
-	public void sendToExchange(Exchange exchange) {
-		this.sentToExchange = true;
-		exchange.pushOrder(this);
+	public Ric getRic() {
+		return this.ric;
 	}
 	
+	////////////////////////////
+	///// Public Methods ///////
+	////////////////////////////
 	
-	/**
-	 * Is the order filled, or is there still unfulfilled parts of the order
-	 * @return True if the oder is complete, false otherwise
-	 */
-	public boolean isOrderFilled() {
-		if(leftUnfulfilled() == 0) {
-			return true;
-		} else {
-			return false;
-		}
+	public void addTrade(Trade trade) {
+		this.completedTrades.add(trade);
 	}
 
 	
-	public void setTime(LocalTime time) {
-		this.tradeTime = time;
-	}
-	
-	
+	@Override
 	public String toString() {
-		return "(Buy order: " + this.isBuyOrder + " for " + this.shareTotal + ")";
+		StringBuilder output = new StringBuilder();
+		//output.append(symbol);
+		if(this.buyOrder) output.append(" <--BUY-- ");
+		else output.append(" --SELL--> ");
+		output.append(size + "@" + price + currency);
+		return output.toString();
 	}
 }
