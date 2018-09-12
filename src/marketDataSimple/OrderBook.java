@@ -1,17 +1,22 @@
 package marketDataSimple;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.TreeMap;
 import java.util.stream.Collectors;
 
 import com.sun.tools.classfile.Type;
 
 public class OrderBook {
 
-	private LinkedList<TradeOrder> offers = new LinkedList<>();
-	private LinkedList<TradeOrder> bids = new LinkedList<>();
 	private Ric bookRic;
-	private Exchange parentExchange;
+	private Exchange exchange;
+	
+	//Order storage.
+	private HashMap<Class<? extends Instrument>, InstrumentCollection> instrumentBids = new HashMap<>();
+	private HashMap<Class<? extends Instrument>, InstrumentCollection> instrumentOffers = new HashMap<>();
 	
 	//////////////////////////////////////
 	////////// Constructor ///////////////
@@ -25,7 +30,7 @@ public class OrderBook {
 	 */
 	public OrderBook(Ric bookRic, Exchange parentExchange) {
 		this.bookRic = bookRic;
-		this.parentExchange = parentExchange;		
+		this.exchange = parentExchange;		
 	}
 	
 	////////////////////////////////////
@@ -41,15 +46,9 @@ public class OrderBook {
 	////////////////////////////////////
 	
 	public void pushOrder(TradeOrder order) {
-		if(order.isBuyOrder()) {
-			bids.add(order);
-		} else {
-			offers.add(order);
-		}
-		
-		findTrade(order);
-	}
-	
+		//Push the order into the correct collection
+		InstrumentCollection collection = getCollection(order.getUnderline().getClass(), order.isBuyOrder(), true);
+	}	
 
 	
 	/**
@@ -89,55 +88,7 @@ public class OrderBook {
 		return lowestOffer;
 	}
 	
-	/**
-	 * Get all the bids from the order book where the instrument being traded is of
-	 * the given type
-	 * @param type - The type of the instrument being traded
-	 * @return List of bids in which the instrument is that of type
-	 */
-	public List<TradeOrder> getBidsOfType(Class<? extends Instrument> type){
-		return getInstrumentOfType(type, bids);
-	}
-	
-	/**
-	 * Get all the offers from the order book where the instrument being traded is of
-	 * the given type
-	 * @param type - The type of the instrument being traded
-	 * @return List of offers in which the instrument is that of type
-	 */
-	public List<TradeOrder> getOffersOfType(Class<? extends Instrument> type){
-		return getInstrumentOfType(type, offers);
-	}
-	
-	//////////////////////////////////////
-	////////// Private methods ///////////
-	//////////////////////////////////////
-	
-	/**
-	 * Iterate through the given list and extract trade order of the given baseline
-	 * and return them in a list.
-	 * @param type - The type of instrument
-	 * @param list - The list of instruments
-	 * @return A list of instruments from the given list
-	 */
-	private List<TradeOrder> getInstrumentOfType(Class<? extends Instrument> type, List<TradeOrder> list){
-		return list.stream()
-			.filter(e -> e.getUnderline().getClass().equals(type))
-			.collect(Collectors.toList());
-	}
-	
-	
-	public void findTrade(TradeOrder newOrder) {
-		while(true) {
-			TradeOrder matchedTrade = newOrder.isBuyOrder() ? getBestOffer(newOrder.getUnderline().getClass())
-															: getBestBid(newOrder.getUnderline().getClass());
-			if(matchedTrade == null) break;
-			if(makeTrade(matchedTrade, newOrder)) {
-				continue;
-			}
-			break;
-		}
-	}
+
 	
 	
 	public boolean makeTrade(TradeOrder orderA, TradeOrder orderB) {
@@ -157,6 +108,31 @@ public class OrderBook {
 			}
 		}
 		return false;
+	}
+	
+	/**
+	 * Get the collection used for storing instruments of the type given.
+	 * If create if missing is set to as true then the collection will be created
+	 * if if does not yet already exists 
+	 * @param instrument - The type of instrument to get the collection from
+	 * @param fromBids - True if the collection is to be searched for in the bids, false if from offers.
+	 * @param createIfMissing - When true if the collection is not found its created
+	 * @return The collection used for storing the instrument given, if the collection does not exist and
+	 * createIfMising is false then null is returned, otherwise the collection is created and returned.
+	 */
+	private InstrumentCollection getCollection(Class<? extends Instrument> instrument, boolean fromBids, boolean createIfMissing) {
+		InstrumentCollection collection = fromBids ? instrumentBids.get(instrument)
+												   : instrumentOffers.get(instrument);
+		//The instrument does not exist yet, make a collection for it
+		if(collection == null && createIfMissing) {
+			collection = new InstrumentCollection();
+			if(fromBids)
+				instrumentBids.put(instrument, collection);
+			else
+				instrumentOffers.put(instrument, collection);
+		}
+		
+		return collection;
 	}
 	
 }
