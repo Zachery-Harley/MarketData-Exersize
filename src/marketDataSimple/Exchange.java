@@ -10,9 +10,9 @@ public class Exchange {
 	
 	public Exchange(String name) {
 		//Create and add the order books to the list 
-		orderBooks.add(new OrderBook(new Company("HSBC"), this));
-		orderBooks.add(new OrderBook(new Company("BT"), this));
-		orderBooks.add(new OrderBook(new Company("VOD"), this));
+		orderBooks.add(new OrderBook(new Company("HSBC").getName(), this));
+		orderBooks.add(new OrderBook(new Company("BT").getName(), this));
+		orderBooks.add(new OrderBook(new Company("VOD").getName(), this));
 		this.exchangeName = name;
 	}
 	
@@ -21,7 +21,7 @@ public class Exchange {
 	 * @param newOrder - The new order to pushed to the exchange
 	 */
 	public void pushOrder(TradeOrder newOrder) {
-		OrderBook orderbook = getOrderBook(newOrder.getCompany());
+		OrderBook orderbook = getOrderBook(newOrder.getSym());
 		orderbook.addOrder(newOrder);
 	}
 	
@@ -31,9 +31,9 @@ public class Exchange {
 	 * @param company - The company to find the oder book of
 	 * @return The order book for the given company, null otherwise
 	 */
-	public OrderBook getOrderBook(Company company) {
+	public OrderBook getOrderBook(String company) {
 		for(OrderBook book : orderBooks) {
-			if(book.getCompany().equals(company)) {
+			if(book.sym.equals(company)) {
 				return book;
 			}
 		}

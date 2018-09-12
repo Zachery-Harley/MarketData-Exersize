@@ -1,23 +1,39 @@
 package marketDataSimple;
 
-import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
 
-public class TradeOrder {
+import com.zacheryharley.zava.structure.Row;
 
-	private boolean isBuyOrder;
-	private Company company;
-	private int shareTotal;
-	private int shareFulfilled;
-	private double offerPerShare;
-	private LocalTime tradeTime;
-	private boolean sentToExchange = false;
+
+public class TradeOrder extends ExchangeMessage {
+
+	protected boolean isBuyOrder;
+	protected int shareTotal;
+	protected int shareFulfilled;
+	protected double offerPerShare;
+	protected boolean sentToExchange = false;
 	
-	public TradeOrder(Company company, boolean isBuyOrder, int shareTotal, double offerPerShare) {
+	public TradeOrder(String company, boolean isBuyOrder, int shareTotal, double offerPerShare) {
 		this.isBuyOrder = isBuyOrder;
 		this.shareTotal = shareTotal;
 		this.offerPerShare = offerPerShare;
-		this.company = company;
-		System.nanoTime();
+		this.sym = company;
+	}
+	
+	protected TradeOrder() {
+		
+	}
+	
+	public Row toCSV() {
+		Row output = new Row();
+		output.add(exTime.format(DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm:ss:SSS")));
+		output.add(time.format(DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm:ss:SSS")));
+		output.add(sym);
+		output.add(Boolean.toString(isBuyOrder));
+		output.add(Double.toString(offerPerShare));
+		output.add(Integer.toString(shareTotal));
+		output.add(Boolean.toString(sentToExchange));
+		return output;
 	}
 	
 	/**
@@ -60,22 +76,6 @@ public class TradeOrder {
 		return this.isBuyOrder;
 	}
 	
-	/**
-	 * Get the time the order was created
-	 * @return
-	 */
-	public LocalTime getTime() {
-		return this.tradeTime;
-	}
-	
-	/**
-	 * The name of the company the trade is buying or selling for
-	 * @return
-	 */
-	public Company getCompany() {
-		return this.company;
-	}
-	
 	public boolean isInExchange() {
 		return this.sentToExchange;
 	}
@@ -98,12 +98,6 @@ public class TradeOrder {
 		}
 	}
 
-	
-	public void setTime(LocalTime time) {
-		this.tradeTime = time;
-	}
-	
-	
 	public String toString() {
 		return "(Buy order: " + this.isBuyOrder + " for " + this.shareTotal + ")";
 	}

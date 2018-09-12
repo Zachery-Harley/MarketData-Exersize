@@ -15,7 +15,7 @@ public class Company {
 	 * @return The created buy order
 	 */
 	public TradeOrder newBuyOrder(int amount, double offer) {
-		return new TradeOrder(this, true, amount, offer);
+		return new TradeOrder(this.name, true, amount, offer);
 	}
 	
 	/**
@@ -25,7 +25,7 @@ public class Company {
 	 * @return The created sell order
 	 */
 	public TradeOrder newSellOrder(int amount, double offer) {
-		return new TradeOrder(this, false, amount, offer);
+		return new TradeOrder(this.name, false, amount, offer);
 	}
 	
 	

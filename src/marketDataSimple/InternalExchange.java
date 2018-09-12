@@ -17,7 +17,7 @@ public class InternalExchange extends Exchange{
 	public void pushOrder(TradeOrder newOrder) {
 		super.pushOrder(newOrder);
 		//Check if the orderbook is full, if so push the oldest order to the exchange
-		OrderBook orderbook = getOrderBook(newOrder.getCompany());
+		OrderBook orderbook = getOrderBook(newOrder.getSym());
 		if(orderbook.countPendingOrders() > localTradeBuffer) {
 			TradeOrder oldest = orderbook.getOldestTrade(orderbook.getAllOrders());
 			oldest.sendToExchange(externalExchanges.get("L"));

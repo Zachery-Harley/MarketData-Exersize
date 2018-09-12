@@ -3,28 +3,22 @@ package marketDataSimple;
 import java.util.LinkedList;
 import java.util.List;
 
-public class OrderBook {
+import com.zacheryharley.zava.structure.Row;
+
+public class OrderBook{
 
 	LinkedList<TradeOrder> offers = new LinkedList<>();
 	LinkedList<TradeOrder> bids = new LinkedList<>();
-	Company company;
 	Exchange exchange;
+	String sym;
 	
 	/**
 	 * Create a new order book for the given company.
 	 * @param company - The company the orderbook is for
 	 */
-	public OrderBook(Company company, Exchange exchange) {
-		this.company = company;
+	public OrderBook(String company, Exchange exchange) {
+		this.sym = company;
 		this.exchange = exchange;
-	}
-	
-	/**
-	 * Get the name of the company this order book holds order for
-	 * @return The company the oder book is for
-	 */
-	public Company getCompany() {
-		return this.company;
 	}
 	
 	/**
@@ -40,6 +34,17 @@ public class OrderBook {
 		}
 		//Match any trades
 		matchTrades();
+		
+		if(getHighestBid() != null && getLowestOffer() != null) {
+			int lowSize = getSizeAt(offers, getLowestOffer().getPrice());
+			int lowCount = getCountAt(offers, getLowestOffer().getPrice());
+			int buySize = getSizeAt(bids, getHighestBid().getPrice());
+			int buyCount = getCountAt(bids, getHighestBid().getPrice());
+			Quote q = new Quote(this.sym, exchange, getLowestOffer().getPrice(), lowSize, lowCount, getHighestBid().getPrice(), buySize, buyCount);
+			Main.time = Main.time.plusNanos(5);
+			q.setTime(Main.time);
+			Main.quoteData.addRow(q.toCSV());
+		}
 	}
 	
 	/**
@@ -60,9 +65,7 @@ public class OrderBook {
 			}
 			tradeMade = false;
 		}
-		if(getHighestBid() != null && getLowestOffer() != null) {
-			new Quote(company, exchange, getLowestOffer().getPrice(), getHighestBid().getPrice());
-		}
+		
 	}
 	
 	
@@ -239,9 +242,29 @@ public class OrderBook {
 		return oldest;
 	}
 	
+	public int getSizeAt(LinkedList<TradeOrder> list, double price) {
+		int size = 0;
+		for(TradeOrder order : list) {
+			if(order.getPrice() == price) {
+				size += order.leftUnfulfilled();
+			}
+		}
+		return size;
+	}
+	
+	public int getCountAt(LinkedList<TradeOrder> list, double price) {
+		int count = 0;
+		for(TradeOrder order : list) {
+			if(order.getPrice() == price && order.leftUnfulfilled() > 0) {
+				count++;
+			}
+		}
+		return count;
+	}
+	
 	public String toString() {
 		StringBuilder output = new StringBuilder();
-		output.append("Orderbook for: " + company.getName() + "\n");
+		output.append("Orderbook for: " + this.sym + "\n");
 		output.append("Opening Price: £" + this.getOpenPrice() + "\n");
 		output.append("Closing Price: £" + this.getClosePrice() + "\n");
 		output.append("Average Price: £" + this.getAverage() + "\n");
@@ -249,5 +272,6 @@ public class OrderBook {
 		output.append("Average Weighted price (Interal Crosses): £" + this.getLocalWeightedAverage() + "\n");
 		return output.toString();
 	}
+
 	
 }
