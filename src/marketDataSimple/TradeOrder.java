@@ -1,12 +1,13 @@
 package marketDataSimple;
 
+import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.ArrayList;
 
 public class TradeOrder {
 
-	private LocalTime exTime;
-	private LocalTime time;
+	private LocalDateTime exTime;
+	private LocalDateTime time;
 	private Ric ric;
 	private String currency = "GBp";
 	private ArrayList<Trade> completedTrades = new ArrayList<Trade>();
@@ -15,16 +16,27 @@ public class TradeOrder {
 	private double price;
 	private boolean buyOrder;
 	private boolean condition;
+	private Class<? extends Instrument> underline;
 	
 	////////////////////////////////
 	///////// Constructor //////////
 	////////////////////////////////
 	
-	public TradeOrder(Ric ric, boolean buyOrder, int size, double price) {
+	/**
+	 * Make a new trade order that can be sent to an exchange.
+	 * @param ric - The ric of the company whose instruments are being traded
+	 * @param buyOrder - True to buy the instrument, false to sell
+	 * @param size - The size of the order
+	 * @param price - The price to be paid for each item in the order
+	 * @param instrument - The type of instrument to be traded 
+	 */
+	public TradeOrder(Ric ric, boolean buyOrder, int size, double price, Class<? extends Instrument> instrument) {
 		this.ric = ric;
 		this.buyOrder = buyOrder;
 		this.size = size;
 		this.price = price;
+		this.time = LocalDateTime.now();
+		this.underline = instrument;
 	}
 	
 	///////////////////////////////
@@ -35,15 +47,15 @@ public class TradeOrder {
 	 * Get the size of the trade order
 	 */
 	public int getSize() {
-		return this.size;
+		return this.size;	
 	}
 	
 	/**
 	 * Get the underlying type of trade. E.g bond, equity, swap
-	 * @return The underlining instrument
+	 * @return The underlining instrument class.
 	 */
-	public Instrument getUnderline() {
-		return new Instrument();
+	public Class<? extends Instrument> getUnderline() {
+		return this.underline;
 	}
 	
 	/**
@@ -104,21 +116,54 @@ public class TradeOrder {
 	public void setReported(boolean condition) {
 		this.condition = condition;
 	}
-	
-	public void setTime(LocalTime time) {
-		this.time = time;
-	}
-	
+
+	/**
+	 * Get the RIC of the company that this trade is trading instruments in
+	 * @return The Ric
+	 */
 	public Ric getRic() {
 		return this.ric;
+	}
+	
+	/**
+	 * Get the time the bank sent/received the trade order
+	 * @return The banks trade time
+	 */
+	public LocalDateTime getBankTime() {
+		return this.time;
+	}
+	
+	/**
+	 * Get the time this the exchange send/received the trade order
+	 * @return The exchanges trade time
+	 */
+	public LocalDateTime getExchangeTime() {
+		return this.exTime;
 	}
 	
 	////////////////////////////
 	///// Public Methods ///////
 	////////////////////////////
 	
-	public void addTrade(Trade trade) {
+	
+	/**
+	 * Add the trade to the order, this needs to be done for both buyer and seller
+	 * @param trade - The trade object
+	 * @return True if this order is now complete, false otherwise
+	 * @throws IlligalTradeException - The trade was illegal consuming more than what the order could offer
+	 */
+	public boolean addTrade(Trade trade) throws IlligalTradeException{
 		this.completedTrades.add(trade);
+		//Count the remaining and if its less than 0 return true
+		int remaining = this.getRemainingSize();
+		if(remaining == 0) 
+			return true;
+		if(remaining > 0)
+			return false;
+		//The remaining is negative, remove the trade and throw an exception
+		this.completedTrades.remove(trade);
+		System.err.println(trade.toString());
+		throw new IlligalTradeException();
 	}
 
 	
@@ -126,8 +171,9 @@ public class TradeOrder {
 	public String toString() {
 		StringBuilder output = new StringBuilder();
 		//output.append(symbol);
-		if(this.buyOrder) output.append(" <--BUY-- ");
-		else output.append(" --SELL--> ");
+		output.append(this.buyOrder	? "BUY \t"
+									: "SELL\t");
+		output.append(this.ric.ticker + "\t" + this.underline.getSimpleName() + "\t");
 		output.append(size + "@" + price + currency);
 		return output.toString();
 	}

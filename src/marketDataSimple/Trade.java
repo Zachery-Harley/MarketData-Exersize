@@ -8,9 +8,15 @@ public class Trade {
 	private double price;
 	private int size;
 	
-	public Trade(TradeOrder bid, TradeOrder offer) {
-		this.bid = bid;
-		this.offer = offer;
+	public Trade(TradeOrder tradeA, TradeOrder tradeB) {
+		//Trade A wants to be the buy order
+		if(!tradeA.isBuyOrder()) {
+			TradeOrder temp = tradeA;
+			tradeA = tradeB;
+			tradeB = temp;
+		}
+		this.bid = tradeA;
+		this.offer = tradeB;
 	}
 	
 	public int getSize() {
@@ -45,8 +51,9 @@ public class Trade {
 	
 	/**
 	 * Complete the trade between the buyer and the seller.
+	 * @throws IlligalTradeException 
 	 */
-	public void trade() {
+	public void trade() throws IlligalTradeException {
 		this.bid.addTrade(this);
 		this.offer.addTrade(this);
 		System.out.println(this.toString());

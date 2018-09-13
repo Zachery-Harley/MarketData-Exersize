@@ -10,12 +10,14 @@ public class Main {
 	static Ric VOD = new Ric("VOD", "Vodafone");
 	static Ric BT = new Ric("BT", "British Telecomunications");
 	
-	public static void main(String[] args) {		
+	public static void main(String[] args) {
+		long start = System.currentTimeMillis();
 		market.newOrderBook(VOD);
 		market.newOrderBook(BT);
 		market.newOrderBook(HSBC);
 		
 		generateOrders();
+		System.err.println(System.currentTimeMillis() - start);
 	}
 	
 	public static void generateOrders() {
@@ -40,8 +42,7 @@ public class Main {
 		boolean buy = rand.nextBoolean();
 		int amount = rand.nextInt(100);
 		double cost = (rand.nextDouble() * 10);
-		TradeOrder order = new TradeOrder(company, buy, amount, cost);
-		order.setTime(time);
+		TradeOrder order = new TradeOrder(company, buy, amount, cost, EqInstrument.class);
 		market.pushOrder(order);
 	}
 

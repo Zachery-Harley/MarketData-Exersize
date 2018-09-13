@@ -1,6 +1,7 @@
 package marketDataSimple;
 
 import java.util.ArrayList;
+import java.util.NoSuchElementException;
 import java.util.TreeMap;
 
 public class InstrumentCollection {
@@ -28,14 +29,38 @@ public class InstrumentCollection {
 		fetchedList.add(order);
 		
 		//Only match if the new order is better than the last quote
-		if(lastQuote.isBeatBy(order)) {
+		if(lastQuote == null || lastQuote.isBeatBy(order)) {
 			//Find matches for the new order
 			findMatches(order);
 		}
 	}
 	
+	/**
+	 * Get the best bid trade order from the collection. If there is no bid
+	 * then null is returned.
+	 * @return The order with best bid price, null if no available orders.
+	 */
 	public TradeOrder getBestBid() {
-		bids.first
+		try {
+			Double bestPrice = bids.lastKey();
+			return bids.get(bestPrice).get(0);
+		} catch (IndexOutOfBoundsException | NoSuchElementException e) {
+			return null;
+		}
+	}
+	
+	/**
+	 * Get the best offer order from the collection. If there is no offer then
+	 * null is returned.
+	 * @return The offer with the best offer price, null if no available order.
+	 */
+	public TradeOrder getBestOffer() {
+		try {
+			Double bestOffer = offers.firstKey();
+			return offers.get(bestOffer).get(0);
+		} catch (IndexOutOfBoundsException | NoSuchElementException e) {
+			return null;
+		}
 	}
 	
 	///////////////////////////
@@ -43,7 +68,21 @@ public class InstrumentCollection {
 	///////////////////////////
 	
 	private void findMatches(TradeOrder order) {
-		//TODO impliment
+		System.out.println("Finding matchs for: " + order.toString());
+		TradeOrder matchingTrade = order.isBuyOrder()	? getBestOffer()
+														: getBestBid();
+		if(matchingTrade != null) {
+			//Trade with the match
+			Trade trade = new  Trade(order, matchingTrade);
+			trade.canTrade();
+			try {
+				trade.trade();
+			} catch (IlligalTradeException e) {
+				System.err.println("Trader order over filled!: " + e);
+				e.printStackTrace();
+			}
+		}
+		
 	}
 	
 	/**
