@@ -17,7 +17,7 @@ public class Main {
 		market.newOrderBook(HSBC);
 		
 		generateOrders();
-		System.err.println(System.currentTimeMillis() - start);
+		System.out.println(System.currentTimeMillis() - start);
 	}
 	
 	public static void generateOrders() {
@@ -30,7 +30,7 @@ public class Main {
 		ran2.setSeed(System.currentTimeMillis());
 		ran3.setSeed(System.nanoTime()/2);
 		
-		for(int i = 0; i < 33; i++) {
+		for(int i = 0; i < 1000; i++) {
 			time.plusMinutes(i);
 			generateRandomTrade(ran1, time, HSBC);
 			generateRandomTrade(ran2, time, VOD);
