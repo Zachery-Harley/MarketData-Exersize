@@ -1,5 +1,6 @@
 package marketDataSimple.minMax;
 
+import marketDataSimple.replay.ReplayAbstract;
 import marketDataSimple.replay.ReplayQuote;
 
 public class MarketRange {
@@ -14,16 +15,18 @@ public class MarketRange {
 		this.sym = sym;
 	}
 	
-	public void updateRange(ReplayQuote q) {
-		
-		if(!bidInit || q.getBestBid() > highestBid) {
-			highestBid = q.getBestBid();
-			bidInit = true;
-		}
-		
-		if(!offerInit || q.getBestOffer() < minOffer) {
-			minOffer = q.getBestOffer();
-			offerInit = true;
+	public void updateRange(ReplayAbstract replay) {
+		if(replay instanceof ReplayQuote) {
+			ReplayQuote q = (ReplayQuote) replay;
+			if(!bidInit || q.getBestBid() > highestBid) {
+				highestBid = q.getBestBid();
+				bidInit = true;
+			}
+			
+			if(!offerInit || q.getBestOffer() < minOffer) {
+				minOffer = q.getBestOffer();
+				offerInit = true;
+			}
 		}
 	}
 	

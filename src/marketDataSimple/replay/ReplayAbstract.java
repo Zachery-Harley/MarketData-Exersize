@@ -11,4 +11,8 @@ public class ReplayAbstract {
 	public LocalDateTime getTime() {
 		return this.time;
 	}
+	
+	public String getSym() {
+		return this.sym;
+	}
 }

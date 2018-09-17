@@ -16,6 +16,7 @@ public class InternalExchange extends Exchange{
 	@Override
 	public void pushOrder(TradeOrder newOrder) {
 		super.pushOrder(newOrder);
+		System.out.println(newOrder.toString());
 		//Check if the orderbook is full, if so push the oldest order to the exchange
 		OrderBook orderbook = getOrderBook(newOrder.getSym());
 		if(orderbook.countPendingOrders() > localTradeBuffer) {

@@ -1,61 +1,69 @@
 package marketDataSimple.replay;
 
-import java.nio.file.NoSuchFileException;
-import java.time.LocalDateTime;
-import java.time.ZoneOffset;
 import java.time.temporal.ChronoUnit;
-
-import javax.naming.directory.InvalidAttributeValueException;
+import java.util.ArrayList;
 
 import com.zacheryharley.zava.io.CSVReader;
 import com.zacheryharley.zava.structure.Table;
 
-import marketDataSimple.minMax.MarketRange;
 import marketDataSimple.minMax.MarketRangeCalc;
 
-public class Replay {
+public class Replay implements Runnable{
 	
-	public static void main(String[] args) {
-		Table quoteData = null;
-		Table tradeData = null;
-		MarketRangeCalc rangeCalculator = new MarketRangeCalc();
-		
+	Table quotes = null;
+	Table trades = null;
+	private String quoteDataPath, tradeDataPath;
+	private ArrayList<ReplayAbstract> replayBuffer = new ArrayList<>();
+	private MarketRangeCalc notifyableObject;
+	
+	public Replay(String quoteData, String tradeData) {
+		this.quoteDataPath = quoteData;
+		this.tradeDataPath = tradeData;
+	}
+	
+	public void setNotifyable(MarketRangeCalc notifyObject) {
+		this.notifyableObject = notifyObject;
+	}
+	
+	public ArrayList<ReplayAbstract> getReplayBuffer(){
+		return this.replayBuffer;
+	}
+	
+	public boolean readHistoryData() {
 		try {
-			CSVReader csvReader = new CSVReader("quoteData.csv");
-			quoteData = csvReader.read();
-			tradeData = csvReader.read("tradeData.csv");
-		} catch(Exception e) {
-			System.err.println("Could not read data from file.");
+			CSVReader reader = new CSVReader();
+			this.quotes = reader.read(this.quoteDataPath);
+			this.trades = reader.read(this.tradeDataPath);
+			return true;
+		} catch (Exception e) {
+			System.err.println("Could not read data from files.");
 			e.printStackTrace();
-			System.exit(1);
+			return false;
 		}
-		
-		ReplayManager replayMan = new ReplayManager(quoteData, tradeData);
-		try {
-			LocalDateTime startTime = new ReplayTrade(tradeData.getRow(0)).getTime();
-		} catch (InvalidAttributeValueException e) {
-			System.err.println("Cannot get start time due to first trade error: " + e.getMessage());
-			e.printStackTrace();
-			System.exit(1);
-		}
+	}
+	
+	public void runReplay() {
+		ReplayManager manager = new ReplayManager(this.quotes, this.trades);
 		
 		ReplayAbstract nextReplay = null;
-		while((nextReplay = replayMan.getNext(true)) != null) {
+		while((nextReplay = manager.getNext(true)) != null) {
 			if(nextReplay instanceof ReplayQuote) {
-				ReplayQuote q = (ReplayQuote)nextReplay;
-				rangeCalculator.processQuote(q);
+				synchronized (replayBuffer) {
+					ReplayQuote q = (ReplayQuote)nextReplay;
+					this.replayBuffer.add(q);
+					replayBuffer.notifyAll();
+				}
 			}
 			
 			if(nextReplay instanceof ReplayTrade) {
 				ReplayTrade t = (ReplayTrade)nextReplay;
 			}
-			//Wait for the next replay to be ready
-			waitForNextReplay(nextReplay, replayMan.getNext(false));
+			
+			//Pause this thread until the next task is ready to run
+			waitForNextReplay(nextReplay, manager.getNext(false));
 		}
-		
-		rangeCalculator.printSummery();
-		
 	}
+	
 	
 	public static void waitForNextReplay(ReplayAbstract current, ReplayAbstract next) {
 		if(next == null) return;
@@ -77,6 +85,15 @@ public class Replay {
 			System.err.println("Failed to wait for specified time of: " + millis + ":" + nano);
 			e.printStackTrace();
 		}
+	}
+
+
+	@Override
+	public void run() {
+		System.out.println("Running replays");
+		readHistoryData();
+		runReplay();
+		this.notifyableObject.running = false;
 	}
 	
 }

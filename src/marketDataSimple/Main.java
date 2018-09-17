@@ -19,17 +19,19 @@ public class Main {
 	static Company BT = new Company("BT");
 	
 	public static void main(String[] args) {
+		long start = System.currentTimeMillis();
 		tradeData = new Table();
 		quoteData = new Table();
 		
 		generateOrders();
+		System.err.println(System.currentTimeMillis() - start);
 		//System.out.println("\nDone:\n"+market.toString());
-		
+		/**
 		//Save the table output
 		CSVWriter quoteWriter = new CSVWriter("quoteData.csv");
 		CSVWriter tradeWriter = new CSVWriter("tradeData.csv");
 		quoteWriter.write(quoteData);
-		tradeWriter.write(tradeData);
+		tradeWriter.write(tradeData);*/
 	}
 	
 	public static void generateOrders() {
@@ -41,7 +43,7 @@ public class Main {
 		ran2.setSeed(System.currentTimeMillis());
 		ran3.setSeed(System.nanoTime()/2);
 		
-		for(int i = 0; i < 33; i++) {
+		for(int i = 0; i < 1000; i++) {
 			Main.time = Main.time.plus(ran1.nextInt(50), ChronoUnit.MILLIS);
 			generateRandomTrade(ran1, time, HSBC);
 			Main.time = Main.time.plus(ran1.nextInt(50), ChronoUnit.MILLIS);
